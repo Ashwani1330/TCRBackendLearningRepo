@@ -1,0 +1,34 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AuthService.Models;
+
+public class Session
+{
+    [Key]
+    public int SessionId { get; set; }
+    
+    [Required]
+    public string Subject { get; set; } = null!;
+    
+    [Required]
+    public string ClassName { get; set; } = null!;
+    
+    [Required]
+    public string Standard { get; set; } = null!;
+    
+    [Required]
+    public DateTime StartTime { get; set; }
+    
+    [Required]
+    public DateTime EndTime { get; set; }
+    
+    // Foreign key to Teacher
+    [Required]
+    public int TeacherId { get; set; }
+    public Teacher? Teacher { get; set; }
+    
+    // Foreign key to School
+    [Required]
+    public int SchoolId { get; set; }
+    public School? School { get; set; }
+}

@@ -1,0 +1,10 @@
+﻿using AuthService.Models;
+
+namespace AuthService.Services;
+
+public interface ITeacherAuthService
+{
+    Task<AuthResponse> LoginAsync(TeacherLoginRequest request);
+    Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request);
+    Task<bool> LogoutAsync(string token);
+}

@@ -1,0 +1,87 @@
+﻿using AuthService.Models;
+using AuthService.Services;
+using Microsoft.AspNetCore.Mvc;
+
+namespace AuthService.Controllers;
+
+[ApiController]
+[Route("api/auth")]
+public class AuthController : ControllerBase
+{
+    private readonly IStudentAuthService _studentAuthService;
+    private readonly ITeacherAuthService _teacherAuthService;
+    private readonly IAdminAuthService _adminAuthService;
+
+    public AuthController(
+        IStudentAuthService studentAuthService,
+        ITeacherAuthService teacherAuthService,
+        IAdminAuthService adminAuthService)
+    {
+        _studentAuthService = studentAuthService;
+        _teacherAuthService = teacherAuthService;
+        _adminAuthService = adminAuthService;
+    }
+
+    [HttpPost("student/login")]
+    public async Task<IActionResult> StudentLogin([FromBody] StudentLoginRequest request)
+    {
+        var response = await _studentAuthService.LoginAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("teacher/login")]
+    public async Task<IActionResult> TeacherLogin([FromBody] TeacherLoginRequest request)
+    {
+        var response = await _teacherAuthService.LoginAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("admin/login")]
+    public async Task<IActionResult> AdminLogin([FromBody] AdminLoginRequest request)
+    {
+        var response = await _adminAuthService.LoginAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("student/refresh")]
+    public async Task<IActionResult> StudentRefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var response = await _studentAuthService.RefreshTokenAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("teacher/refresh")]
+    public async Task<IActionResult> TeacherRefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var response = await _teacherAuthService.RefreshTokenAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("admin/refresh")]
+    public async Task<IActionResult> AdminRefreshToken([FromBody] RefreshTokenRequest request)
+    {
+        var response = await _adminAuthService.RefreshTokenAsync(request);
+        return Ok(response);
+    }
+
+    [HttpPost("student/logout")]
+    public async Task<IActionResult> StudentLogout([FromBody] string refreshToken)
+    {
+        await _studentAuthService.LogoutAsync(refreshToken);
+        return Ok(new { message = "Logged out successfully" });
+    }
+
+    [HttpPost("teacher/logout")]
+    public async Task<IActionResult> TeacherLogout([FromBody] string refreshToken)
+    {
+        await _teacherAuthService.LogoutAsync(refreshToken);
+        return Ok(new { message = "Logged out successfully" });
+    }
+
+    [HttpPost("admin/logout")]
+    public async Task<IActionResult> AdminLogout([FromBody] string refreshToken)
+    {
+        await _adminAuthService.LogoutAsync(refreshToken);
+        return Ok(new { message = "Logged out successfully" });
+    }
+}

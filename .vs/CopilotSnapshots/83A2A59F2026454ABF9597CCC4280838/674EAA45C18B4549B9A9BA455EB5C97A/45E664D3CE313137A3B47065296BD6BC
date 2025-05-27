@@ -1,0 +1,213 @@
+﻿using AuthService.Data;
+using AuthService.Models;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Security.Cryptography;
+
+namespace AuthService.Services;
+
+public class TeacherAuthService : ITeacherAuthService
+{
+    private readonly AppDbContext _context;
+    private readonly ITokenService _tokenService;
+
+    public TeacherAuthService(AppDbContext context, ITokenService tokenService)
+    {
+        _context = context;
+        _tokenService = tokenService;
+    }
+
+    public async Task<AuthResponse> LoginAsync(TeacherLoginRequest request)
+    {
+        // Find the teacher by email
+        var teacher = await _context.Teachers.FirstOrDefaultAsync(t => t.Email == request.Email);
+        
+        if (teacher == null)
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Invalid email or password"
+            };
+        }
+        
+        // Verify password
+        if (string.IsNullOrEmpty(teacher.PasswordHash) || 
+            !VerifyPassword(request.Password, teacher.PasswordHash))
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Invalid email or password"
+            };
+        }
+        
+        // Generate JWT token
+        var tokenId = Guid.NewGuid().ToString();
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Sub, teacher.TeacherId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Jti, tokenId),
+            new Claim(ClaimTypes.Name, teacher.FullName),
+            new Claim(ClaimTypes.Email, teacher.Email),
+            new Claim(ClaimTypes.Role, "Teacher"),
+            new Claim("SchoolId", teacher.SchoolId.ToString()),
+            new Claim("Subject", teacher.Subject ?? ""),
+            new Claim("IsClassTeacher", teacher.IsClassTeacher.ToString())
+        };
+        
+        var token = _tokenService.GenerateJwtToken(claims);
+        var refreshToken = _tokenService.GenerateRefreshToken(tokenId, teacher.TeacherId.ToString(), "Teacher");
+        
+        // Save refresh token to database
+        _context.RefreshTokens.Add(refreshToken);
+        await _context.SaveChangesAsync();
+        
+        return new AuthResponse
+        {
+            Success = true,
+            Message = "Login successful",
+            Token = token,
+            RefreshToken = refreshToken.Token,
+            Expiration = DateTime.UtcNow.AddHours(1),
+            User = new UserDetails
+            {
+                Id = teacher.TeacherId,
+                Name = teacher.FullName,
+                Email = teacher.Email,
+                Role = "Teacher",
+                AdditionalInfo = new Dictionary<string, object>
+                {
+                    { "SchoolId", teacher.SchoolId },
+                    { "Subject", teacher.Subject ?? "" },
+                    { "IsClassTeacher", teacher.IsClassTeacher }
+                }
+            }
+        };
+    }
+
+    public async Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request)
+    {
+        var principal = _tokenService.GetPrincipalFromToken(request.Token);
+        if (principal == null)
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Invalid token"
+            };
+        }
+        
+        var jti = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Jti)?.Value;
+        var userId = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value;
+        
+        if (string.IsNullOrEmpty(jti) || string.IsNullOrEmpty(userId))
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Invalid token"
+            };
+        }
+        
+        var isRefreshTokenValid = await _tokenService.ValidateRefreshTokenAsync(request.RefreshToken, jti, userId, "Teacher");
+        if (!isRefreshTokenValid)
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Invalid refresh token"
+            };
+        }
+        
+        var teacher = await _context.Teachers.FindAsync(int.Parse(userId));
+        if (teacher == null)
+        {
+            return new AuthResponse
+            {
+                Success = false,
+                Message = "Teacher not found"
+            };
+        }
+        
+        // Generate new tokens
+        var newTokenId = Guid.NewGuid().ToString();
+        var claims = principal.Claims.Where(c => c.Type != JwtRegisteredClaimNames.Jti)
+            .Append(new Claim(JwtRegisteredClaimNames.Jti, newTokenId));
+        
+        var newToken = _tokenService.GenerateJwtToken(claims);
+        var newRefreshToken = _tokenService.GenerateRefreshToken(newTokenId, userId, "Teacher");
+        
+        // Save new refresh token
+        _context.RefreshTokens.Add(newRefreshToken);
+        await _context.SaveChangesAsync();
+        
+        return new AuthResponse
+        {
+            Success = true,
+            Message = "Token refreshed successfully",
+            Token = newToken,
+            RefreshToken = newRefreshToken.Token,
+            Expiration = DateTime.UtcNow.AddHours(1),
+            User = new UserDetails
+            {
+                Id = teacher.TeacherId,
+                Name = teacher.FullName,
+                Email = teacher.Email,
+                Role = "Teacher",
+                AdditionalInfo = new Dictionary<string, object>
+                {
+                    { "SchoolId", teacher.SchoolId },
+                    { "Subject", teacher.Subject ?? "" },
+                    { "IsClassTeacher", teacher.IsClassTeacher }
+                }
+            }
+        };
+    }
+
+    public async Task<bool> LogoutAsync(string token)
+    {
+        await _tokenService.InvalidateRefreshTokenAsync(token);
+        return true;
+    }
+
+    private bool VerifyPassword(string password, string storedHash)
+    {
+        // In a real implementation, you'd verify the password against a hashed value
+        // This is a simplified example for password hashing
+        var parts = storedHash.Split('.');
+        if (parts.Length != 3)
+            return false;
+        
+        var salt = Convert.FromBase64String(parts[0]);
+        var iterations = int.Parse(parts[1]);
+        var storedHashValue = parts[2];
+        
+        string computedHash = HashPassword(password, salt, iterations);
+        
+        return computedHash == storedHash;
+    }
+    
+    public string HashPassword(string password, byte[] salt = null, int? iterations = null)
+    {
+        salt = salt ?? new byte[128 / 8];
+        if (salt.Length == 0)
+        {
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(salt);
+        }
+        
+        iterations = iterations ?? 10000;
+        
+        string hashed = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+            password: password,
+            salt: salt,
+            prf: KeyDerivationPrf.HMACSHA256,
+            iterationCount: iterations.Value,
+            numBytesRequested: 256 / 8));
+            
+        return $"{Convert.ToBase64String(salt)}.{iterations}.{hashed}";
+    }
+}

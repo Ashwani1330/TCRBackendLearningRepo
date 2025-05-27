@@ -1,0 +1,28 @@
+﻿using AuthService.Data;
+using Microsoft.EntityFrameworkCore;
+
+namespace AuthService.Utilities;
+
+public static class DbInitializer
+{
+    public static async Task Initialize(IServiceProvider serviceProvider)
+    {
+        using var scope = serviceProvider.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+
+        try
+        {
+            logger.LogInformation("Attempting to migrate database");
+            await context.Database.MigrateAsync();
+            logger.LogInformation("Database migrated successfully");
+            
+            // You can add seed data here if needed
+            
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while initializing the database");
+        }
+    }
+}

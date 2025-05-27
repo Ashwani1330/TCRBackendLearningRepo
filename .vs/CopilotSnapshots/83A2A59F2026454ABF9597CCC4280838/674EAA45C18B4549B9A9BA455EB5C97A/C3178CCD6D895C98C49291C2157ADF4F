@@ -1,0 +1,6 @@
+﻿namespace LearningBackend.AuthService;
+
+public class Startup
+{
+    
+}

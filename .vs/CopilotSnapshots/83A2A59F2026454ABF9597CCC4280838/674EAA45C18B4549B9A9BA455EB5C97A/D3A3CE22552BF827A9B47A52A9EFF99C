@@ -1,0 +1,72 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AuthService.Models;
+
+// Login models
+public class StudentLoginRequest
+{
+    [Required]
+    public string RollNo { get; set; } = null!;
+    
+    [Required]
+    public DateTime DOB { get; set; }
+    
+    [Required]
+    public string ClassName { get; set; } = null!;
+    
+    [Required]
+    public string Standard { get; set; } = null!;
+    
+    [Required]
+    public string DeviceId { get; set; } = null!;
+}
+
+public class TeacherLoginRequest
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = null!;
+    
+    [Required]
+    public string Password { get; set; } = null!;
+}
+
+public class AdminLoginRequest
+{
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = null!;
+    
+    [Required]
+    public string Password { get; set; } = null!;
+}
+
+// Response models
+public class AuthResponse
+{
+    public bool Success { get; set; }
+    public string? Message { get; set; }
+    public string? Token { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? Expiration { get; set; }
+    public UserDetails? User { get; set; }
+}
+
+public class UserDetails
+{
+    public int Id { get; set; }
+    public string? Name { get; set; }
+    public string? Email { get; set; }
+    public string? Role { get; set; }
+    public Dictionary<string, object>? AdditionalInfo { get; set; }
+}
+
+// Refresh token model
+public class RefreshTokenRequest
+{
+    [Required]
+    public string Token { get; set; } = null!;
+    
+    [Required]
+    public string RefreshToken { get; set; } = null!;
+}

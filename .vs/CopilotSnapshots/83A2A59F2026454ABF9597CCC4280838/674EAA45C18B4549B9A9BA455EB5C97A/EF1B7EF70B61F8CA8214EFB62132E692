@@ -1,0 +1,23 @@
+﻿{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=vr_auth_service;Username=postgres;Password=postgres"
+  },
+  "JWT": {
+    "Key": "Super_Secret_Key_For_Development_Replace_In_Production_Environment_With_Strong_Key",
+    "Issuer": "VRPlatform.AuthService",
+    "Audience": "VRPlatform.Clients"
+  },
+  "AdminCredentials": {
+    "Email": "admin@vrplatform.com",
+    "PasswordHash": "Placeholder_Hash_Should_Be_Generated",
+    "Id": "1",
+    "Name": "System Administrator"
+  }
+}
