@@ -1,5 +1,8 @@
+/*using LearningBackend.DeviceMonitoringService.Models;
 using Microsoft.EntityFrameworkCore;
 using LearningBackend.Models;
+using LearningBackend.school_admin_api.Models;
+using LearningBackend.SchoolAdminApi.Models;
 
 namespace LearningBackend.Data
 {
@@ -10,6 +13,6 @@ namespace LearningBackend.Data
         public DbSet<Teacher> Teachers { get; set; } = null!;
         public DbSet<School> Schools { get; set; } = null!;
         public DbSet<Student> Students { get; set; } = null!;
-        public DbSet<Session> Sessions { get; set; } = null!;
+        public DbSet<StudentProgress> Sessions { get; set; } = null!;
     }
-}
+}*/

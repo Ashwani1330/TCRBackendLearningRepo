@@ -1,0 +1,47 @@
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AuthService.Models;
+
+public class Student
+{
+    [Key]
+    public int StudentId { get; set; }
+
+    [Required]
+    public string FirstName { get; set; } = null!;
+    
+    [Required]
+    public string LastName { get; set; } = null!;
+
+    [Required]
+    public DateTime DateOfBirth { get; set; }
+    
+    public string? Gender { get; set; }
+
+    public string? ParentEmail { get; set; }
+    
+    public string? ParentPhoneNumber { get; set; }
+
+    public string? Address { get; set; }
+
+    [Required]
+    public string Standard { get; set; } = null!;
+    
+    public string? ClassName { get; set; }
+    
+    [Required]
+    public int RollNumber { get; set; }
+
+    // Foreign Key to School
+    [Required]
+    public int SchoolId { get; set; }
+    public School? School { get; set; }
+
+    public DateTime EnrollmentDate { get; set; } = DateTime.UtcNow;
+    
+    // Tenure field to track student subscription status
+    public string? Tenure { get; set; }
+    
+    // Used to track student's achievements and progress across subjects
+    public string? AchievementsData { get; set; } // JSON serialized data
+}

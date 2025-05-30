@@ -1,0 +1,10 @@
+﻿using AuthService.Models;
+
+namespace AuthService.Services;
+
+public interface IAdminAuthService
+{
+    Task<AuthResponse> LoginAsync(AdminLoginRequest request);
+    Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request);
+    Task<bool> LogoutAsync(string token);
+}

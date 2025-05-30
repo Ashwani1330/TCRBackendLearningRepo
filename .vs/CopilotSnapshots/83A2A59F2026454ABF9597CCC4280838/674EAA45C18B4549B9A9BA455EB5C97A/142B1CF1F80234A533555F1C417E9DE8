@@ -1,0 +1,13 @@
+﻿using AuthService.Models;
+using System.Security.Claims;
+
+namespace AuthService.Services;
+
+public interface ITokenService
+{
+    string GenerateJwtToken(IEnumerable<Claim> claims);
+    RefreshToken GenerateRefreshToken(string jwtId, string userId, string userType);
+    ClaimsPrincipal GetPrincipalFromToken(string token);
+    Task<bool> ValidateRefreshTokenAsync(string token, string jwtId, string userId, string userType);
+    Task InvalidateRefreshTokenAsync(string token);
+}

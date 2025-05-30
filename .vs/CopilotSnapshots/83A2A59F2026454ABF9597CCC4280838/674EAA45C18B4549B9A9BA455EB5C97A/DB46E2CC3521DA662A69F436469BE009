@@ -1,0 +1,10 @@
+﻿using AuthService.Models;
+
+namespace AuthService.Services;
+
+public interface IStudentAuthService
+{
+    Task<AuthResponse> LoginAsync(StudentLoginRequest request);
+    Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request);
+    Task<bool> LogoutAsync(string token);
+}
